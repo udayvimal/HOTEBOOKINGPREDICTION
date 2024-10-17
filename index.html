@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Booking Prediction</title>
+    <style>
+        /* General body styling */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #002D62, #0B6DAB);
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* Main container styling */
+        .container {
+            background-color: #ffffff;
+            padding: 50px;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+            max-width: 700px;
+            width: 100%;
+            position: relative;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        /* Background image to make the design pop */
+        .background-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://images.unsplash.com/photo-1558980664-7e07b0071f6b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            background-position: center;
+            filter: brightness(0.5);
+            z-index: -1;
+        }
+
+        /* Header styling */
+        h1 {
+            text-align: center;
+            color: #002D62;
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+        }
+
+        /* Form styling */
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        label {
+            font-size: 1.1rem;
+            color: #666;
+        }
+
+        input[type="number"] {
+            padding: 15px;
+            font-size: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            background-color: #F9F9F9;
+            outline: none;
+        }
+
+        input[type="number"]:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 10px rgba(0, 123, 255, 0.2);
+        }
+
+        /* Custom button styling */
+        button {
+            background-color: #002D62;
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            border-radius: 50px;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #0050A1;
+            box-shadow: 0 5px 15px rgba(0, 80, 161, 0.3);
+        }
+
+        /* Prediction result box */
+        .prediction-output {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 1.6rem;
+            padding: 20px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .prediction-output.success {
+            color: #28a745;
+        }
+
+        .prediction-output.error {
+            color: #dc3545;
+        }
+
+        /* Add subtle background shapes for a modern feel */
+        .decorative-blob {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.2);
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            filter: blur(70px);
+            top: -100px;
+            right: -150px;
+        }
+
+        .decorative-blob2 {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.1);
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            bottom: -100px;
+            left: -100px;
+            filter: blur(50px);
+        }
+
+        /* Footer styling */
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            color: #ffffff;
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: #FFD700;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px;
+            }
+
+            h1 {
+                font-size: 2.2rem;
+            }
+
+            input[type="number"] {
+                padding: 12px;
+            }
+
+            button {
+                font-size: 1rem;
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Background image for better aesthetics -->
+    <div class="background-image"></div>
+
+    <!-- Decorative blobs to enhance the design -->
+    <div class="decorative-blob"></div>
+    <div class="decorative-blob2"></div>
+
+    <!-- Main content container -->
+    <div class="container">
+        <h1>Hotel Booking Prediction</h1>
+
+        <form action="/predict" method="POST">
+            <!-- Input fields -->
+            <label for="lead_time">Lead Time (days):</label>
+            <input type="number" id="lead_time" name="lead_time" required min="0" placeholder="Enter number of days">
+
+            <label for="adults">Number of Adults:</label>
+            <input type="number" id="adults" name="adults" required min="1" placeholder="Enter number of adults">
+
+            <label for="previous_cancellations">Previous Cancellations:</label>
+            <input type="number" id="previous_cancellations" name="previous_cancellations" required min="0" placeholder="Enter previous cancellations">
+
+            <label for="total_of_special_requests">Total Special Requests:</label>
+            <input type="number" id="total_of_special_requests" name="total_of_special_requests" required min="0" placeholder="Enter number of special requests">
+
+            <!-- Prediction button -->
+            <button type="submit">Predict Booking Success</button>
+        </form>
+
+        <!-- Prediction Output Section -->
+        <div class="prediction-output" id="prediction_output">
+            <!-- Placeholder for Prediction -->
+        </div>
+    </div>
+
+    <!-- Footer section for extra professionalism -->
+    <footer>
+        &copy; 2024 Hotel Predictor. Developed by <a href="https://yourcompany.com" target="_blank">Your Company</a>.
+    </footer>
+
+    <script>
+        document.querySelector("form").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            // Simulate prediction (replace this with actual logic)
+            let prediction = Math.random() > 0.5 ? 1 : 0;
+
+            let predictionOutput = document.getElementById("prediction_output");
+            predictionOutput.style.display = "block";
+
+            if (prediction === 1) {
+                predictionOutput.textContent = "Booking confirmed. Your reservation is likely to succeed!";
+                predictionOutput.className = "prediction-output success";
+            } else {
+                predictionOutput.textContent = "Booking likely to be canceled. Please reconsider your booking details.";
+                predictionOutput.className = "prediction-output error";
+            }
+        });
+    </script>
+</body>
+
+</html>
