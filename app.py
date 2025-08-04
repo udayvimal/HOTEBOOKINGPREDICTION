@@ -1,170 +1,236 @@
 import streamlit as st
-import pickle
 import numpy as np
+import pickle
+import os
 
-# Load model and scaler once (cache to speed up)
-@st.cache_data(show_spinner=False)
+# ------------------ Custom Dark Theme CSS ------------------
+st.markdown("""
+<style>
+/* Dark background gradient */
+[data-testid="stAppViewContainer"] {
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    color: #eee;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+}
+
+/* Sidebar dark style */
+[data-testid="stSidebar"] {
+    background: #121212;
+    color: #bbb;
+    font-weight: 500;
+}
+
+/* Title gradient text */
+h1 {
+    background: linear-gradient(45deg, #6a11cb, #2575fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800;
+}
+
+/* Button style */
+.stButton > button {
+    background: linear-gradient(45deg, #6a11cb, #2575fc);
+    color: #fff;
+    font-weight: 700;
+    border-radius: 15px;
+    height: 50px;
+    width: 100%;
+    font-size: 20px;
+    transition: background 0.3s ease;
+    box-shadow: 0 0 15px #6a11cbaa;
+    margin-top: 15px;
+}
+.stButton > button:hover {
+    background: linear-gradient(45deg, #2575fc, #6a11cb);
+    box-shadow: 0 0 25px #2575fccc;
+    cursor: pointer;
+}
+
+/* Input fields styling */
+.stTextInput>div>div>input, .stNumberInput>div>input {
+    background-color: #222;
+    color: white;
+    border: 2px solid #444;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 18px;
+    transition: border-color 0.3s ease;
+}
+.stTextInput>div>div>input:focus, .stNumberInput>div>input:focus {
+    border-color: #2575fc;
+    outline: none;
+}
+
+/* Prediction output box */
+.prediction-box {
+    margin-top: 25px;
+    padding: 20px;
+    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 25px rgba(37, 117, 252, 0.5);
+    font-size: 22px;
+    font-weight: 700;
+    text-align: center;
+    color: #fff;
+}
+
+/* Success style */
+.success {
+    color: #4CAF50;
+    background: rgba(76, 175, 80, 0.15);
+}
+
+/* Error style */
+.error {
+    color: #f44336;
+    background: rgba(244, 67, 54, 0.15);
+}
+
+/* Sidebar header */
+.sidebar .css-1d391kg h2 {
+    color: #6a11cb !important;
+    font-weight: 800;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    color: #bbb;
+    font-size: 14px;
+    margin-top: 50px;
+}
+footer a {
+    color: #6a11cb;
+    text-decoration: none;
+}
+footer a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive tweaks */
+@media (max-width: 600px) {
+    .stButton > button {
+        font-size: 16px;
+        height: 45px;
+    }
+}
+</style>
+""", unsafe_allow_html=True)
+
+# --------- Page config ---------
+st.set_page_config(
+    page_title="🏨 Hotel Booking Prediction - Dark Mode",
+    page_icon="🏩",
+    layout="centered",
+    initial_sidebar_state="expanded",
+)
+
+# -------- Sidebar ---------
+with st.sidebar:
+    st.header("🏨 About Hotel Predictor")
+    st.write(
+        """
+        This app predicts whether a hotel booking will be **confirmed** or **canceled** based on key booking details.
+
+        - Powered by a Logistic Regression model  
+        - Scaled inputs for accurate prediction  
+        - Dark theme for better viewing comfort  
+        - Developed by [Uday Vimal](https://github.com/udayvimal)  
+        """
+    )
+    st.markdown("---")
+    with st.expander("📁 Show project files"):
+        st.write(os.listdir("."))
+
+# --------- Load model & scaler ---------
+@st.cache_resource
 def load_model_and_scaler():
-    with open("logistic_model.pkl", "rb") as f:
+    with open('logistic_model.pkl', 'rb') as f:
         model = pickle.load(f)
-    with open("scaler.pkl", "rb") as f:
+    with open('scaler.pkl', 'rb') as f:
         scaler = pickle.load(f)
     return model, scaler
 
 model, scaler = load_model_and_scaler()
 
-# Page config
-st.set_page_config(
-    page_title="🏨 Hotel Booking Prediction",
-    page_icon="🏨",
-    layout="centered",
-    initial_sidebar_state="collapsed",
-)
-
-# Custom CSS for styling (dark background, container styling, fonts)
+# --------- Title ---------
+st.markdown("<h1>🏩 Hotel Booking Prediction System</h1>", unsafe_allow_html=True)
 st.markdown(
-    """
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins&display=swap');
-
-    body {
-        font-family: 'Poppins', sans-serif;
-        background: linear-gradient(135deg, #002D62, #0B6DAB);
-        color: #fff;
-    }
-    .main-container {
-        background-color: rgba(255,255,255,0.1);
-        padding: 40px 60px;
-        border-radius: 20px;
-        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
-        max-width: 700px;
-        margin: auto;
-        margin-top: 60px;
-        margin-bottom: 60px;
-    }
-    h1 {
-        text-align: center;
-        font-weight: 700;
-        color: #FFD700;
-        margin-bottom: 30px;
-        font-size: 3rem;
-        text-shadow: 0 0 10px #FFD700;
-    }
-    label {
-        font-weight: 600;
-        font-size: 1.1rem;
-        margin-top: 10px;
-        color: #eee;
-    }
-    input, .stNumberInput>div>input {
-        background-color: #f0f0f0;
-        color: #000;
-        border-radius: 8px;
-        padding: 12px;
-        font-size: 1rem;
-        border: none;
-        width: 100%;
-    }
-    button {
-        background-color: #002D62;
-        color: white;
-        border: none;
-        padding: 15px;
-        font-size: 1.3rem;
-        cursor: pointer;
-        border-radius: 50px;
-        font-weight: 700;
-        width: 100%;
-        margin-top: 25px;
-        transition: background-color 0.3s ease, box-shadow 0.3s ease;
-        box-shadow: 0 0 15px #FFD700;
-    }
-    button:hover {
-        background-color: #0050A1;
-        box-shadow: 0 0 25px #FFD700;
-    }
-    .result-box {
-        margin-top: 30px;
-        padding: 20px;
-        border-radius: 15px;
-        font-size: 1.5rem;
-        text-align: center;
-        font-weight: 700;
-        box-shadow: 0 0 30px #FFD700;
-    }
-    .success {
-        background-color: #28a745;
-        color: white;
-    }
-    .error {
-        background-color: #dc3545;
-        color: white;
-    }
-    footer {
-        text-align: center;
-        color: #ddd;
-        margin-bottom: 20px;
-        font-size: 0.9rem;
-    }
-    </style>
-    """,
+    "<p style='color:#ccc; font-size:18px;'>Fill the booking details below and get instant prediction whether the reservation will be confirmed or canceled.</p>",
     unsafe_allow_html=True,
 )
 
-# Main container
-st.markdown('<div class="main-container">', unsafe_allow_html=True)
+# --------- Input Form ---------
+with st.form("prediction_form"):
+    lead_time = st.number_input(
+        "Lead Time (days before arrival)",
+        min_value=0,
+        max_value=365,
+        value=30,
+        help="Number of days between booking and arrival date",
+        step=1,
+    )
+    adults = st.number_input(
+        "Number of Adults",
+        min_value=1,
+        max_value=10,
+        value=2,
+        help="How many adults are included in the booking",
+        step=1,
+    )
+    previous_cancellations = st.number_input(
+        "Previous Cancellations",
+        min_value=0,
+        max_value=10,
+        value=0,
+        help="How many bookings were canceled before by this customer",
+        step=1,
+    )
+    special_requests = st.number_input(
+        "Total Special Requests",
+        min_value=0,
+        max_value=10,
+        value=1,
+        help="Number of special requests made by customer (e.g. late check-in)",
+        step=1,
+    )
+    submitted = st.form_submit_button("Predict Booking Status")
 
-st.markdown("<h1>Hotel Booking Prediction</h1>", unsafe_allow_html=True)
-
-# Input fields using Streamlit number inputs
-lead_time = st.number_input(
-    "Lead Time (days):", min_value=0, step=1, format="%d", help="Enter number of days before booking"
-)
-adults = st.number_input(
-    "Number of Adults:", min_value=1, step=1, format="%d", help="Enter number of adults"
-)
-previous_cancellations = st.number_input(
-    "Previous Cancellations:", min_value=0, step=1, format="%d", help="Number of previous cancellations"
-)
-total_special_requests = st.number_input(
-    "Total Special Requests:", min_value=0, step=1, format="%d", help="Enter total special requests"
-)
-
-# Predict button
-predict_clicked = st.button("Predict Booking Success")
-
-if predict_clicked:
+# --------- Prediction Logic ---------
+if submitted:
     try:
-        # Prepare input array
-        input_features = np.array(
-            [[lead_time, adults, previous_cancellations, total_special_requests]]
-        )
-        # Scale input
-        input_scaled = scaler.transform(input_features)
-        # Predict
-        prediction = model.predict(input_scaled)[0]
+        features = np.array([[lead_time, adults, previous_cancellations, special_requests]])
+        features_scaled = scaler.transform(features)
+        prediction = model.predict(features_scaled)[0]
 
-        # Show results with styled box
+        # Display prediction with style
         if prediction == 1:
             st.markdown(
-                '<div class="result-box success">Booking confirmed! Your reservation is likely to succeed!</div>',
+                "<div class='prediction-box success'>✅ Booking Confirmed! Your reservation is very likely to succeed.</div>",
                 unsafe_allow_html=True,
             )
         else:
             st.markdown(
-                '<div class="result-box error">Booking likely to be canceled. Please reconsider your booking details.</div>',
+                "<div class='prediction-box error'>❌ Booking Likely Canceled. Please reconsider your booking details.</div>",
                 unsafe_allow_html=True,
             )
+
+        # Show prediction confidence if available
+        if hasattr(model, "predict_proba"):
+            proba = model.predict_proba(features_scaled)[0][prediction]
+            st.info(f"Prediction Confidence: **{proba * 100:.2f}%**")
+
     except Exception as e:
-        st.error(f"Error during prediction: {e}")
+        st.error(f"⚠️ Error during prediction: {e}")
 
-st.markdown("</div>", unsafe_allow_html=True)
-
-# Footer
+# --------- Footer ---------
+st.markdown("---")
 st.markdown(
     """
     <footer>
-        &copy; 2024 Hotel Predictor. Developed by <a href="https://yourcompany.com" style="color:#FFD700;" target="_blank">Your Company</a>.
+    Developed by <a href='https://github.com/udayvimal' target='_blank'>Uday Vimal</a> &bull; Powered by Streamlit
     </footer>
     """,
     unsafe_allow_html=True,
